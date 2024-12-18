@@ -37,7 +37,8 @@ def remove_multiline_comments(text):
     return re.sub(r"<#.*?#>", "", text, flags=re.DOTALL)
 
 def tokenize(text):
-
+    # Простейший лексер
+    # Разбиваем по шаблонам
     token_specification = [
         ('TABLE',   r'table'),
         ('LBRACK',  r'\['),
@@ -180,29 +181,24 @@ class Parser:
         elif token.ttype == 'TABLE':
             return self.parse_table_expr()
         elif token.ttype == 'QUESTION':
-            # substituted_value := '?{' NAME '}'
-            self.eat('QUESTION') # съедаем '?{'
+            self.eat('QUESTION')
             name_t = self.eat(TOKEN_NAME)
-            self.eat('RBRACE') # '}'
-            # Подставляем значение из constants
+            self.eat('RBRACE')
             if name_t.value not in self.constants:
                 raise ParseError(f"Undefined constant {name_t.value}")
             const_val = self.constants[name_t.value]
-            # const_val уже должен быть конечным значением (int, bool, str, dict)
             return const_val
         else:
             raise ParseError(f"Unexpected token {token.ttype} in value at pos {token.pos}")
 
 def main():
     text = sys.stdin.read()
-    # Удаляем многострочные комментарии
     text = remove_multiline_comments(text)
 
     tokens = tokenize(text)
     parser = Parser(tokens)
     result = parser.parse_config()
 
-    # Выводим в YAML
     print(yaml.dump(result, allow_unicode=True, sort_keys=False))
 
 if __name__ == "__main__":
